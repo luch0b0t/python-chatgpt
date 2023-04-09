@@ -5,21 +5,37 @@ import openai
 
 dotenv.load_dotenv()
 
+def new_content(role: str, content: str):
+    return {"role": role, "content": content}
+
 def main():
 
 
     openai.organization = os.environ.get('OPENAPI_ORGANIZATION')
     openai.api_key = os.environ.get('OPENAI_KEY')
+    messages = []
 
-    user_content = input("Que deseas preguntar?: ")
+    system_context = new_content("system", "Eres un asistente muy útil.")
 
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
-                                 messages=[{
-                                     "role": "user", "content": user_contentcual
-                                 }])
+    messages.append(system_context)
 
-    print(response.choices[0].message.content)
+    while True:
+        content = input("Que deseas preguntar?: ")
+        if content == "exit":
+            return None
 
+        user_content = new_content("user", content)
+        messages.append(user_content)
+
+        response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
+                                     messages=messages)
+
+        response_context = response.choices[0].message.content
+        print(response.choices[0].message.content)
+
+
+        asistant_context = new_content("assistant", response_context)
+        messages.append(asistant_context)
 
 
 if __name__ == '__main__':
