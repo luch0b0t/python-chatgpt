@@ -20,12 +20,15 @@ class Context():
     def add(self, context):
         self.__messages.append(context)
 
+    def reset(self):
+        self.__messages = []
+
     def get_messages(self):
         return self.__messages
 
 
 def __prompt() -> str:
-    prompt = typer.prompt("Que deseas preguntar?: ")
+    prompt = typer.prompt("💬 Que deseas preguntar?")
     if prompt == "exit":
         raise typer.Exit()
 
@@ -52,9 +55,9 @@ def main():
         content = __prompt()
 
         if content == "new":
-            conetxt = Context()
+            context.reset()
             context.add_context("system", "Eres un asistente muy útil.")
-            break
+            content = __prompt()
 
         context.add_context("user", content)
 
@@ -62,8 +65,8 @@ def main():
                                      messages=context.get_messages())
 
         response_context = response.choices[0].message.content
-        print(f"[bold green]> [/bold green]  {response_context} \n"
-              f"----------------------------------------------------------")
+        print(f"[bold green]> [/bold green] [blue]{response_context}[/blue]\n"
+              f"[bold green]----------------------------------------------------------[/bold green]")
 
         context.add_context("assistant", response_context)
 
