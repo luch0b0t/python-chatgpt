@@ -30,7 +30,12 @@ def main():
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
                                      messages=messages)
 
+        response_context = response.choices[0].message.content
         print(response.choices[0].message.content)
+
+
+        asistant_context = new_content("assistant", response_context)
+        messages.append(asistant_context)
 
 
 if __name__ == '__main__':
