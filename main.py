@@ -1,42 +1,75 @@
 import dotenv
 import os
 import openai
+import typer
+from rich import print
+from rich.table import Table
 
 
 dotenv.load_dotenv()
 
-def new_content(role: str, content: str):
-    return {"role": role, "content": content}
+
+class Context():
+    def __init__(self):
+        self.__messages = []
+
+    def add_context(self, role: str, content: str):
+        __context = {"role": role, "content": content}
+        self.add(__context)
+
+    def add(self, context):
+        self.__messages.append(context)
+
+    def reset(self):
+        self.__messages = []
+
+    def get_messages(self):
+        return self.__messages
+
+
+def __prompt() -> str:
+    prompt = typer.prompt("💬 Que deseas preguntar?")
+    if prompt == "exit":
+        raise typer.Exit()
+
+    return prompt
+
 
 def main():
 
-
     openai.organization = os.environ.get('OPENAPI_ORGANIZATION')
     openai.api_key = os.environ.get('OPENAI_KEY')
-    messages = []
+    context = Context()
 
-    system_context = new_content("system", "Eres un asistente muy útil.")
+    print("[bold blue] Welcome to this ChatGPT API implementation [/bold blue]")
 
-    messages.append(system_context)
+    context.add_context("system", "Eres un asistente muy útil.")
+
+    table = Table("Comando", "Descripción")
+    table.add_row("exit", "Salir de la aplicación")
+    table.add_row("new", "Crear una nueva conversación")
+
+    print(table)
 
     while True:
-        content = input("Que deseas preguntar?: ")
-        if content == "exit":
-            return None
+        content = __prompt()
 
-        user_content = new_content("user", content)
-        messages.append(user_content)
+        if content == "new":
+            context.reset()
+            context.add_context("system", "Eres un asistente muy útil.")
+            content = __prompt()
+
+        context.add_context("user", content)
 
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
-                                     messages=messages)
+                                     messages=context.get_messages())
 
         response_context = response.choices[0].message.content
-        print(response.choices[0].message.content)
+        print(f"[bold green]> [/bold green] [blue]{response_context}[/blue]\n"
+              f"[bold green]----------------------------------------------------------[/bold green]")
 
-
-        asistant_context = new_content("assistant", response_context)
-        messages.append(asistant_context)
+        context.add_context("assistant", response_context)
 
 
 if __name__ == '__main__':
-    main()
+    typer.run(main)
