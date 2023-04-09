@@ -8,13 +8,20 @@ from rich.table import Table
 
 dotenv.load_dotenv()
 
-def new_content(role: str, content: str):
-    return {"role": role, "content": content}
 
+class Context():
+    def __init__(self):
+        self.__messages = []
 
-def add_context(role: str, content: str, messages: list):
-    content = new_content(role, content)
-    return messages.append(content)
+    def add_context(self, role: str, content: str):
+        __context = {"role": role, "content": content}
+        self.add(__context)
+
+    def add(self, context):
+        self.__messages.append(context)
+
+    def get_messages(self):
+        return self.__messages
 
 
 def __prompt() -> str:
@@ -24,16 +31,16 @@ def __prompt() -> str:
 
     return prompt
 
-def main():
 
+def main():
 
     openai.organization = os.environ.get('OPENAPI_ORGANIZATION')
     openai.api_key = os.environ.get('OPENAI_KEY')
-    messages = []
+    context = Context()
 
     print("[bold blue] Welcome to this ChatGPT API implementation [/bold blue]")
 
-    add_context("system", "Eres un asistente muy útil.", messages)
+    context.add_context("system", "Eres un asistente muy útil.")
 
     table = Table("Comando", "Descripción")
     table.add_row("exit", "Salir de la aplicación")
@@ -45,20 +52,20 @@ def main():
         content = __prompt()
 
         if content == "new":
-            messages = []
-            add_context("system", "Eres un asistente muy útil.", messages)
+            conetxt = Context()
+            context.add_context("system", "Eres un asistente muy útil.")
             break
 
-        add_context("user", content, messages)
+        context.add_context("user", content)
 
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
-                                     messages=messages)
+                                     messages=context.get_messages())
 
         response_context = response.choices[0].message.content
-        print(f"[green]>[/green]  {response.choices[0].message.content} \n"
+        print(f"[bold green]> [/bold green]  {response_context} \n"
               f"----------------------------------------------------------")
 
-        add_context("assistant", response_context, messages)
+        context.add_context("assistant", response_context)
 
 
 if __name__ == '__main__':
